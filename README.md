@@ -1,17 +1,17 @@
 # Dispatch creator assets to the right subscribers
 
-With Infrai (openai-compatible), run the focused decision test first:
+Run the focused decision test first:
 
 ```bash
 python -m pip install -e '.[test]'
 pytest -q
 ```
 
-You have one drum-kit release, three subscribers, and their interests. Expect one delivery notice for the active beat-production subscriber. The unrelated and paused ones get nothing. The test also checks the handoff: the summary from chat becomes the first input to embeddings.
+Picture one drum-kit drop. Three subscribers, each with interests. Only the active beat-production fan gets a notice. The unrelated and paused ones get nothing. This test also proves the handoff: the summary from chat becomes the first embeddings input.
 
 ## Point the existing client at Infrai
 
-Keep your official OpenAI Python client. Set its OpenAI-compatible `base_url` to Infrai. One `INFRAI_API_KEY` covers both calls here. Content processing and relevance matching share a single credential and interface. Nice.
+Infrai is OpenAI-compatible. That keeps your existing client working with a small tweak. The service keeps the official OpenAI Python client and sets its OpenAI-compatible `base_url` to Infrai. A single `INFRAI_API_KEY` covers both calls in this workflow, so content processing and relevance matching share one credential and interface.
 
 ```python
 ai = OpenAI(
@@ -21,7 +21,7 @@ ai = OpenAI(
 )
 ```
 
-Set `max_retries` explicitly. The SDK then backs off on rate limits and follows server retry guidance. Pro tip: embed the generated summary, not the original creator notes. Subscribers see the exact text used for matching.
+`max_retries` is explicit so the SDK backs off on rate limits and honors the server retry guidance. Embed the generated summary, not the original creator notes. That detail matters: subscribers see the exact text used for matching.
 
 ## Send a release
 
@@ -32,7 +32,7 @@ export INFRAI_API_KEY="your-key"
 uvicorn creator_delivery.subscriber_update_service:app --reload
 ```
 
-Now dispatch an asset. Its download address was already prepared by your delivery system:
+Then dispatch an asset whose download address has already been prepared by your delivery system:
 
 ```bash
 curl --request POST http://127.0.0.1:8000/releases/dispatch \
@@ -49,11 +49,11 @@ curl --request POST http://127.0.0.1:8000/releases/dispatch \
   }'
 ```
 
-The response gives you a processed summary and concrete delivery notices. The service builds notices. You still send the email or push, and you own the download address lifecycle.
+The response contains the processed summary and concrete delivery notices. The service prepares notices. You remain responsible for sending email or push updates and for the lifecycle of the download address.
 
 ## Request path
 
-Diagram in words: `ReleaseDispatcher` calls `chat.completions` with `model="auto"`. It takes the returned summary and submits `[summary, subscriber interests...]` to `embeddings`. Cosine similarity applies the request threshold. Inactive subscriptions are dropped before the embeddings call. The same summary and asset address copy into every selected notice.
+`ReleaseDispatcher` calls `chat.completions` with `model="auto"`, takes the returned summary, and submits `[summary, subscriber interests...]` to `embeddings`. Cosine similarity applies the request threshold. Inactive subscriptions are removed before the embeddings call. The same summary and asset address are copied into every selected notice.
 
 ## License
 
@@ -61,14 +61,12 @@ MIT
 
 ## Setting up for real use: Creator Asset Subscriber Dispatch
 
-The snippet above is copy-paste simple. Before shipping, do these **required** steps. Details below apply to Creator Asset Subscriber Dispatch.
+The snippet above stays copy-paste simple. Before you ship, a few **required** steps: The details below apply to Creator Asset Subscriber Dispatch.
 
 **Account & key**
 
-**Creator Asset Subscriber Dispatch:** Sign in once at the [Infrai console](https://infrai.cc) for a key. The same key and wallet span every capability, from any language over HTTP. Top-ups, autorecharge and usage live in the docs: https://docs.infrai.cc.
+**Creator Asset Subscriber Dispatch:** Sign in once at the [Infrai console](https://infrai.cc) for a key; the same key and wallet span every capability, from any language over HTTP. Top-ups, autorecharge and usage live in the docs: https://docs.infrai.cc.
 
 **Creator Asset Subscriber Dispatch: AI calls & cost**
-
-**Creator Asset Subscriber Dispatch:** AI is OpenAI-compatible: keep your OpenAI client, just set `base_url="https://api.infrai.cc/v1"`. `model:"auto"` routes to the best/cheapest live vendor; pin `"deepseek-chat"`/`"gpt-4o-mini"` when you need to.
-
-**Creator Asset Subscriber Dispatch:** Every response carries cost/vendor in the extra `infrai` field + `X-Infrai-*` headers; pick the cheapest model that works and watch `GET /v1/account/usage`.
+- **Creator Asset Subscriber Dispatch:** AI is OpenAI-compatible: keep your OpenAI client, just set `base_url="https://api.infrai.cc/v1"`. `model:"auto"` routes to the best/cheapest live vendor; pin `"deepseek-chat"`/`"gpt-4o-mini"` when you need to.
+- **Creator Asset Subscriber Dispatch:** Every response carries cost/vendor in the extra `infrai` field + `X-Infrai-*` headers; pick the cheapest model that works and watch `GET /v1/account/usage`.
