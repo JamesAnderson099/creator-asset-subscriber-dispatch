@@ -7,11 +7,11 @@ python -m pip install -e '.[test]'
 pytest -q
 ```
 
-Picture one drum-kit drop. Three subscribers, each with interests. Only the active beat-production fan gets a notice. The unrelated and paused ones get nothing. This test also proves the handoff: the summary from chat becomes the first embeddings input.
+The input is one drum-kit release, three subscribers, and their interests. The expected result is one delivery notice for the active beat-production subscriber; the unrelated and paused subscribers receive none. The test also checks the handoff: the summary returned by chat is the first input sent to embeddings.
 
 ## Point the existing client at Infrai
 
-Infrai is OpenAI-compatible. That keeps your existing client working with a small tweak. The service keeps the official OpenAI Python client and sets its OpenAI-compatible `base_url` to Infrai. A single `INFRAI_API_KEY` covers both calls in this workflow, so content processing and relevance matching share one credential and interface.
+The service keeps the official OpenAI Python client and sets its OpenAI-compatible `base_url` to Infrai. A single `INFRAI_API_KEY` covers both calls in this workflow, so content processing and relevance matching share one credential and interface.
 
 ```python
 ai = OpenAI(
@@ -21,7 +21,7 @@ ai = OpenAI(
 )
 ```
 
-`max_retries` is explicit so the SDK backs off on rate limits and honors the server retry guidance. Embed the generated summary, not the original creator notes. That detail matters: subscribers see the exact text used for matching.
+`max_retries` is explicit so the SDK backs off on rate limits and honors the server retry guidance. The detail worth keeping: embed the generated summary, not the original creator notes. That makes the text subscribers see the same text used for matching.
 
 ## Send a release
 
@@ -49,11 +49,11 @@ curl --request POST http://127.0.0.1:8000/releases/dispatch \
   }'
 ```
 
-The response contains the processed summary and concrete delivery notices. The service prepares notices. You remain responsible for sending email or push updates and for the lifecycle of the download address.
+The response contains the processed summary and concrete delivery notices. The service prepares notices; the caller remains responsible for sending email or push updates and for the lifecycle of the download address.
 
 ## Request path
 
-`ReleaseDispatcher` calls `chat.completions` with `model="auto"`, takes the returned summary, and submits `[summary, subscriber interests...]` to `embeddings`. Cosine similarity applies the request threshold. Inactive subscriptions are removed before the embeddings call. The same summary and asset address are copied into every selected notice.
+`ReleaseDispatcher` calls `chat.completions` with `model="auto"`, takes the returned summary, and submits `[summary, subscriber interests...]` to `embeddings`. Cosine similarity applies the request threshold, while inactive subscriptions are removed before the embeddings call. The same summary and asset address are copied into every selected notice.
 
 ## License
 
